@@ -13,9 +13,11 @@ module private Elmish =
     open Elmish
 
     type Todo =
-        { Id: Guid
-          Description: string
-          Completed: bool }
+        {
+            Id: Guid
+            Description: string
+            Completed: bool
+        }
 
     type State = { Todos: Todo list }
 
@@ -26,19 +28,29 @@ module private Elmish =
         | ApplyEdit of Guid * string
 
     let newTodo txt =
-        { Id = Guid.NewGuid()
-          Description = txt
-          Completed = false }
+        {
+            Id = Guid.NewGuid()
+            Description = txt
+            Completed = false
+        }
 
     let initTodos (count: int) =
-        [ newTodo "Learn F#"
-          { newTodo $"Learn Elmish  in {count} days" with Completed = true } ]
+        [
+            newTodo "Learn F#"
+            { newTodo $"Learn Elmish  in {count} days" with
+                Completed = true
+            }
+        ]
 
     let init (count: int) = { Todos = initTodos count }, Cmd.none
 
     let update (msg: Msg) (state: State) =
         match msg with
-        | AddNewTodo txt -> { state with Todos = (newTodo txt) :: state.Todos }, Cmd.none
+        | AddNewTodo txt ->
+            { state with
+                Todos = (newTodo txt) :: state.Todos
+            },
+            Cmd.none
 
         | DeleteTodo todoId ->
             state.Todos
@@ -94,13 +106,13 @@ module private Components =
         """
 
     [<JSX.Component>]
-    let Button isVisible (iconClass: string) (classes: (string * bool) list) dispatch =
+    let Button (iconClass: string) (classes: (string * bool) list) dispatch =
         JSX.jsx
             $"""
         <button type="button"
                 onClick={fun _ -> dispatch ()}
                 style={toStyle [ style.marginRight (length.px 4) ]}
-                className={toClass [ "button", true; "is-invisible", not isVisible; yield! classes ]}>
+                className={toClass [ "button", true; yield! classes ]}>
             <i className={iconClass}></i>
         </button>
         """
@@ -110,7 +122,6 @@ module private Components =
         let inputRef = React.useRef<HTMLInputElement option> (None)
         let edit, setEdit = React.useState<string option> (None)
         let isEditing = Option.isSome edit
-        let isNotEditing = Option.isNone edit
 
         let applyEdit edit =
             ApplyEdit(todo.Id, edit) |> dispatch
@@ -128,35 +139,52 @@ module private Components =
 
         JSX.jsx
             $"""
+        import {{ SlQrCode }} from "@shoelace-style/shoelace/dist/react"
+
         <li className="box">
             <div className="columns">
                 <div className="column is-7">
                 {match edit with
                  | Some edit ->
                      Html.input
-                         [ prop.ref inputRef
-                           prop.classes [ "input"; "is-medium" ]
-                           prop.value edit
-                           prop.onChange (Some >> setEdit)
-                           prop.onKeyDown (onEnterOrEscape applyEdit (fun _ -> setEdit None))
-                           prop.onBlur (fun _ -> setEdit None) ]
+                         [
+                             prop.ref inputRef
+                             prop.classes [ "input"; "is-medium" ]
+                             prop.value edit
+                             prop.onChange (Some >> setEdit)
+                             prop.onKeyDown (onEnterOrEscape applyEdit (fun _ -> setEdit None))
+                             prop.onBlur (fun _ -> setEdit None)
+                         ]
                  | None ->
                      Html.p
-                         [ prop.className "subtitle"
-                           prop.onDoubleClick (fun _ -> Some todo.Description |> setEdit)
-                           prop.style [ style.userSelect.none; style.cursor.pointer ]
-                           prop.children [ Html.text todo.Description ] ]}
+                         [
+                             prop.className "subtitle"
+                             prop.onDoubleClick (fun _ -> Some todo.Description |> setEdit)
+                             prop.style [ style.userSelect.none; style.cursor.pointer ]
+                             prop.children [ Html.text todo.Description ]
+                         ]}                
                 </div>
-            </div>
-            <div className="columns">
-                <div className="column is-4">
-                    {Button isEditing "fa fa-save" [ "is-primary", true ] (fun () -> applyEdit edit.Value)}
+                {Html.div
+                     [
+                         prop.className "column is-3"
+                         prop.children
+                             [
+                                 if isEditing then
+                                     Button "fa fa-save" [ "is-primary", true ] (fun () -> applyEdit edit.Value)
+                                     |> toReact
+                                 else
+                                     Button "fa fa-check" [ "is-success", todo.Completed ] (fun () -> ToggleCompleted todo.Id |> dispatch)
+                                     |> toReact
 
-                    {Button isNotEditing "fa fa-check" [ "is-success", todo.Completed ] (fun () -> ToggleCompleted todo.Id |> dispatch)}
+                                     Button "fa fa-edit" [ "is-primary", true ] (fun () -> Some todo.Description |> setEdit)
+                                     |> toReact
 
-                    {Button isNotEditing "fa fa-edit" [ "is-primary", true ] (fun () -> Some todo.Description |> setEdit)}
-
-                    {Button isNotEditing "fa fa-times" [ "is-danger", true ] (fun () -> DeleteTodo todo.Id |> dispatch)}
+                                     Button "fa fa-times" [ "is-danger", true ] (fun () -> DeleteTodo todo.Id |> dispatch)
+                                     |> toReact
+                             ]
+                     ]}
+                <div className="column is-2">
+                    <SlQrCode value={todo.Description} size="64" radius="0.5"></SlQrCode>
                 </div>
             </div>
         </li>
@@ -171,9 +199,9 @@ let App () =
 
     JSX.jsx
         $"""
-    <div className="container mx-4 mt-4">
+    <div className="container mx-5 mt-5 is-max-desktop">
         <p className="title">My Todos</p>
         {InputField dispatch}
-        {model.Todos |> List.map (fun t -> TodoView dispatch t t.Id)}
+        <ul>{model.Todos |> List.map (fun t -> TodoView dispatch t t.Id)}</ul>
     </div>
     """
