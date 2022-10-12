@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Helpers.fs" />
+    <Compile Include="TodoMVC.fs" />
+    <Compile Include="App.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fable.React.UseElmish" Version="1.0.0-beta-001" />
+    <PackageReference Include="Feliz" Version="2.0.0-prerelease-003" />
+    <PackageReference Include="Fable.Core" Version="4.0.0-theta-005" />
+  </ItemGroup>
+
+</Project>

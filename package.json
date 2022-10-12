@@ -1,0 +1,15 @@
+{
+    "private": "true",
+    "scripts": {
+        "postinstall": "dotnet tool restore",
+        "start": "dotnet fable watch src -o dist -e .jsx --run vite"
+    },
+    "dependencies": {
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    },
+    "devDependencies": {
+        "vite": "^3.1.0",
+        "@vitejs/plugin-react": "^2.1.0"
+    }
+}
